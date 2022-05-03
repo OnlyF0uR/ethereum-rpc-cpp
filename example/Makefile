@@ -5,6 +5,6 @@ LDLIBS=-ljsoncpp -lcurl
 all: main
 
 clean:
-	rm -f *.o main
+	rm -f *.o main.out
 
 .PHONY: all clean
