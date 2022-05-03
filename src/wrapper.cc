@@ -1,27 +1,25 @@
-#pragma once
-
-#include "wrapper.hh"
 #include <curl/curl.h>
 #include <iostream>
 #include <memory>
 #include <string.h>
+#include "wrapper.hh"
 
-Wrapper::Wrapper(char *uri)
+Wrapper::Wrapper()
+{
+}
+
+Wrapper::Wrapper(std::string uri)
 {
     rpc = uri;
 }
 
-Getter Wrapper::Getter()
+Wrapper::Wrapper(std::string uri, std::string v)
 {
-    return Getter();
+    rpc = uri;
+    rpc_v = v;
 }
 
-Sender Wrapper::Sender()
-{
-    return Sender();
-}
-
-size_t Wrapper::WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
+size_t writeCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
     size_t realsize = size * nmemb;
     struct MemoryStruct *mem = (struct MemoryStruct *)userp;
@@ -42,7 +40,7 @@ size_t Wrapper::WriteCallback(void *contents, size_t size, size_t nmemb, void *u
     return realsize;
 }
 
-void Wrapper::SendJson(char *endpt, Json::Value *buffer)
+void Wrapper::SendJson(std::string method, Json::Value *buffer)
 {
     CURL *curl;
     CURLcode res;
@@ -54,14 +52,27 @@ void Wrapper::SendJson(char *endpt, Json::Value *buffer)
         chunk.memory = (char *)malloc(1);
         chunk.size = 0;
 
-        char *uri = (char *)malloc((strlen(rpc) + strlen(endpt) + 1) * sizeof(char));
-        strcpy(uri, rpc);
-        strcat(uri, endpt);
-
-        curl_easy_setopt(curl, CURLOPT_URL, uri);
+        curl_easy_setopt(curl, CURLOPT_URL, rpc.c_str());
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
 
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Wrapper::WriteCallback);
+        struct curl_slist *headers = NULL;
+        headers = curl_slist_append(headers, "Accept: application/json");
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+        headers = curl_slist_append(headers, "charsets: utf-8");
+
+        Json::Value body;
+        body["jsonrpc"] = rpc_v;
+        body["method"] = method;
+        body["params"] = Json::arrayValue;
+        body["id"] = req_id;
+
+        Json::FastWriter fastwriter;
+        std::string message = fastwriter.write(body);
+
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, message.c_str());
+
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
 
         res = curl_easy_perform(curl);
@@ -81,8 +92,6 @@ void Wrapper::SendJson(char *endpt, Json::Value *buffer)
         {
             std::cout << "eth-rpc: Request failed." << std::endl;
         }
-
-        free(uri);
 
         free(chunk.memory);
         curl_easy_cleanup(curl);
@@ -95,7 +104,7 @@ void Wrapper::SendJson(char *endpt, Json::Value *buffer)
     curl_global_cleanup();
 }
 
-void Wrapper::SendJson(char *endpt, Json::Value body, Json::Value *buffer)
+void Wrapper::SendJson(std::string method, Json::Value params, Json::Value *buffer)
 {
     CURL *curl;
     CURLcode res;
@@ -107,11 +116,7 @@ void Wrapper::SendJson(char *endpt, Json::Value body, Json::Value *buffer)
         chunk.memory = (char *)malloc(1);
         chunk.size = 0;
 
-        char *uri = (char *)malloc((strlen(rpc) + strlen(endpt) + 1) * sizeof(char));
-        strcpy(uri, rpc);
-        strcat(uri, endpt);
-
-        curl_easy_setopt(curl, CURLOPT_URL, uri);
+        curl_easy_setopt(curl, CURLOPT_URL, rpc.c_str());
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
 
         struct curl_slist *headers = NULL;
@@ -119,10 +124,19 @@ void Wrapper::SendJson(char *endpt, Json::Value body, Json::Value *buffer)
         headers = curl_slist_append(headers, "Content-Type: application/json");
         headers = curl_slist_append(headers, "charsets: utf-8");
 
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.asCString());
+        Json::Value body;
+        body["jsonrpc"] = rpc_v;
+        body["method"] = method;
+        body["params"] = params;
+        body["id"] = req_id;
 
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Wrapper::WriteCallback);
+        Json::FastWriter fastwriter;
+        std::string message = fastwriter.write(body);
+
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, message.c_str());
+
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
 
         res = curl_easy_perform(curl);
@@ -142,8 +156,6 @@ void Wrapper::SendJson(char *endpt, Json::Value body, Json::Value *buffer)
         {
             std::cout << "eth-rpc: Request failed." << std::endl;
         }
-
-        free(uri);
 
         free(chunk.memory);
         curl_easy_cleanup(curl);

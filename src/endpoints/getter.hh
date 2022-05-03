@@ -1,9 +1,15 @@
-#pragma once
-#include "../wrapper.hh"
+#ifndef GETTER_DOT_H
+#define GETTER_DOT_H
+#include "wrapper.hh"
+#include "json/json.h"
 
-class Getter : public Wrapper
+class Wrapper;
+
+class Getter
 {
   public:
+    Getter(Wrapper *wr);
+
     int BlockNumber();
     Json::Value BlockByHash(std::string tag, bool full);
     Json::Value BlockByNumber(std::string tag, bool full);
@@ -37,4 +43,9 @@ class Getter : public Wrapper
     // TODO: FilterChanges
     // TODO: FilterLogs
     int NewBlockFilter();
+
+  private:
+    Wrapper *wrapper;
 };
+
+#endif
