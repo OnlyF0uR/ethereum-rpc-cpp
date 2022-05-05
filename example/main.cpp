@@ -31,7 +31,7 @@ int main() {
         std::cout << "hash_block is NULL" << std::endl;
     }
 
-    // Get block by tag, latest in this case
+    // Get block by number (or, in this case tag (earliest, latest or pending))
     BlockResult *num_block = getter.BlockByNumber("latest", false);
     if (num_block != NULL) {
         std::cout << "BlockInfo (Latest):\n";
