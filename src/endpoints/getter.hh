@@ -2,6 +2,7 @@
 #define GETTER_DOT_H
 #include "wrapper.hh"
 #include "json/json.h"
+#include "types.hh"
 
 class Wrapper;
 
@@ -10,9 +11,10 @@ class Getter
   public:
     Getter(Wrapper *wr);
 
-    int BlockNumber();
-    Json::Value BlockByHash(std::string tag, bool full);
-    Json::Value BlockByNumber(std::string tag, bool full);
+    // Methods
+    BlockNumberResult *BlockNumber();
+    BlockResult *BlockByHash(std::string hash, bool full);
+    BlockResult *BlockByNumber(std::string tag, bool full);
 
     Json::Value TransactionByHash(std::string hash);
     Json::Value TransactionCount(std::string address, std::string tag);

@@ -52,9 +52,6 @@ void Wrapper::SendJson(std::string method, Json::Value *buffer)
         chunk.memory = (char *)malloc(1);
         chunk.size = 0;
 
-        curl_easy_setopt(curl, CURLOPT_URL, rpc.c_str());
-        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
-
         struct curl_slist *headers = NULL;
         headers = curl_slist_append(headers, "Accept: application/json");
         headers = curl_slist_append(headers, "Content-Type: application/json");
@@ -69,7 +66,10 @@ void Wrapper::SendJson(std::string method, Json::Value *buffer)
         Json::FastWriter fastwriter;
         std::string message = fastwriter.write(body);
 
+        curl_easy_setopt(curl, CURLOPT_URL, rpc.c_str());
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, message.c_str());
 
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
@@ -80,12 +80,12 @@ void Wrapper::SendJson(std::string method, Json::Value *buffer)
         if (res == CURLE_OK)
         {
             JSONCPP_STRING err;
-
             Json::CharReaderBuilder builder;
+            
             const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
             if (!reader->parse(chunk.memory, chunk.memory + chunk.size, buffer, &err))
             {
-                std::cout << "eth-rpc: Failed to parse JSON response." << std::endl;
+                std::cout << "eth-rpc: Failed to parse JSON response: " << err << std::endl;
             }
         }
         else
@@ -93,8 +93,13 @@ void Wrapper::SendJson(std::string method, Json::Value *buffer)
             std::cout << "eth-rpc: Request failed." << std::endl;
         }
 
-        free(chunk.memory);
+        if (chunk.memory != NULL)
+        {
+            free(chunk.memory);
+        }
+
         curl_easy_cleanup(curl);
+        curl_slist_free_all(headers);
     }
     else
     {
@@ -105,7 +110,7 @@ void Wrapper::SendJson(std::string method, Json::Value *buffer)
 }
 
 void Wrapper::SendJson(std::string method, Json::Value params, Json::Value *buffer)
-{
+{    
     CURL *curl;
     CURLcode res;
 
@@ -115,9 +120,6 @@ void Wrapper::SendJson(std::string method, Json::Value params, Json::Value *buff
         struct MemoryStruct chunk;
         chunk.memory = (char *)malloc(1);
         chunk.size = 0;
-
-        curl_easy_setopt(curl, CURLOPT_URL, rpc.c_str());
-        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
 
         struct curl_slist *headers = NULL;
         headers = curl_slist_append(headers, "Accept: application/json");
@@ -133,7 +135,10 @@ void Wrapper::SendJson(std::string method, Json::Value params, Json::Value *buff
         Json::FastWriter fastwriter;
         std::string message = fastwriter.write(body);
 
+        curl_easy_setopt(curl, CURLOPT_URL, rpc.c_str());
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, message.c_str());
 
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
@@ -144,12 +149,12 @@ void Wrapper::SendJson(std::string method, Json::Value params, Json::Value *buff
         if (res == CURLE_OK)
         {
             JSONCPP_STRING err;
-
             Json::CharReaderBuilder builder;
+            
             const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
             if (!reader->parse(chunk.memory, chunk.memory + chunk.size, buffer, &err))
             {
-                std::cout << "eth-rpc: Failed to parse JSON response." << std::endl;
+                std::cout << "eth-rpc: Failed to parse JSON response: " << err << std::endl;
             }
         }
         else
@@ -157,8 +162,13 @@ void Wrapper::SendJson(std::string method, Json::Value params, Json::Value *buff
             std::cout << "eth-rpc: Request failed." << std::endl;
         }
 
-        free(chunk.memory);
+        if (chunk.memory != NULL)
+        {
+            free(chunk.memory);
+        }
+
         curl_easy_cleanup(curl);
+        curl_slist_free_all(headers);
     }
     else
     {
