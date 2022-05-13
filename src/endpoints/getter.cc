@@ -117,7 +117,6 @@ BlockResult *Getter::BlockByNumber(std::string tag, bool full)
     result->id = buffer["id"].asInt();
 
     result->block.hash = buffer["result"]["hash"].asString();
-
     result->block.baseFeePerGas = std::stoul(buffer["result"]["baseFeePerGas"].asString(), nullptr, 16);
     result->block.difficulty = buffer["result"]["difficulty"].asString();
     result->block.extraData = buffer["result"]["extraData"].asString();
@@ -141,4 +140,80 @@ BlockResult *Getter::BlockByNumber(std::string tag, bool full)
     result->block.uncles = buffer["result"]["uncles"];
 
     return result;
+}
+
+TransactionResult *Getter::TransactionByHash(std::string hash)
+{
+    Json::Value params(Json::arrayValue);
+    params.append(hash);
+
+    Json::Value buffer;
+    wrapper->SendJson("eth_getTransactionByHash", params, &buffer);
+
+    if (buffer.empty())
+    {
+        return NULL;
+    }
+
+    if (buffer["jsonrpc"].isNull() || buffer["id"].isNull() || buffer["result"].isNull())
+    {
+        return NULL;
+    }
+
+    TransactionResult *result = new TransactionResult();
+    if (result == NULL)
+    {
+        return NULL;
+    }
+
+    result->jsonrpc = buffer["jsonrpc"].asString();
+    result->id = buffer["id"].asInt();
+    
+    result->transaction.hash = buffer["result"]["hash"].asString();
+    result->transaction.blockHash = buffer["result"]["blockHash"].asString();
+    result->transaction.blockNumber = std::stoul(buffer["result"]["blockNumber"].asString(), nullptr, 16);
+    result->transaction.from = buffer["result"]["from"].asString();
+    result->transaction.gas = std::stoul(buffer["result"]["gas"].asString(), nullptr, 16);
+    result->transaction.gasPrice = buffer["result"]["gasPrice"].asString();
+    result->transaction.input = buffer["result"]["input"].asString();
+    result->transaction.nonce = std::stoul(buffer["result"]["nonce"].asString(), nullptr, 16);
+    result->transaction.r = buffer["result"]["r"].asString();
+    result->transaction.s = buffer["result"]["s"].asString();
+    result->transaction.to = buffer["result"]["to"].asString();
+    result->transaction.transactionIndex = std::stoul(buffer["result"]["transactionIndex"].asString(), nullptr, 16);
+    result->transaction.v = std::stoul(buffer["result"]["v"].asString(), nullptr, 16);
+    result->transaction.value = buffer["result"]["value"].asString();
+
+    return result;
+}
+
+TransactionCountResult *Getter::TransactionCount(std::string address, std::string tag)
+{
+    Json::Value params(Json::arrayValue);
+    params.append(address);
+    params.append(tag);
+
+    Json::Value buffer;
+    wrapper->SendJson("eth_getTransactionCount", params, &buffer);
+
+    if (buffer.empty())
+    {
+        return NULL;
+    }
+
+    if (buffer["jsonrpc"].isNull() || buffer["id"].isNull() || buffer["result"].isNull())
+    {
+        return NULL;
+    }
+
+    TransactionCountResult *result = new TransactionCountResult();
+    if (result == NULL)
+    {
+        return NULL;
+    }
+
+    result->jsonrpc = buffer["jsonrpc"].asString();
+    result->id = buffer["id"].asInt();
+
+    result->count = std::stoul(buffer["result"].asString(), nullptr, 16);;
 }

@@ -47,5 +47,35 @@ struct BlockResult : Default
 };
 
 // ===============================
+struct Transaction
+{
+    std::string hash;
+    std::string blockHash;
+    int blockNumber;
+    std::string from;
+    int gas;
+    std::string gasPrice;
+    std::string input;
+    int nonce;
+    std::string r;
+    std::string s;
+    std::string to;
+    int transactionIndex;
+    int v;
+    std::string value;
+};
+
+struct TransactionResult : Default
+{
+    Transaction transaction;
+};
+
+// ===============================
+struct TransactionCountResult : Default
+{
+    int count;
+};
+
+// ===============================
 
 #endif
