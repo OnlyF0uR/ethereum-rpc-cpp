@@ -2,6 +2,8 @@
 #include <iostream>
 #include <memory>
 #include <string.h>
+#include <sstream>
+#include <iomanip>
 #include "wrapper.hh"
 
 Wrapper::Wrapper()
