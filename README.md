@@ -5,7 +5,7 @@ Wrapper written in C++ for the ethereum JSON-RPC.
 Please note that this project is still a WIP. Features are expected to be added and the codebase possibly to be reworked / refactored.
 
 ### Dependencies
- - [curl](https://github.com/curl/curl)
+ - [libcurl](https://github.com/curl/curl)
  - [jsoncpp](https://github.com/open-source-parsers/jsoncpp)
 
 ### Practice

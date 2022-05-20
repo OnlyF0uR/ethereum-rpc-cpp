@@ -11,11 +11,6 @@ Sender::Sender(Wrapper* wr, std::string privateKey) {
 	this->privateKey = this->CharArrayToByteArray(const_cast<char*>(privateKey.c_str()));
 }
 
-//Sender::Sender(Wrapper* wr, char* privateKey) {
-//	this->wrapper = wr;
-//	this->privateKey = this->CharArrayToByteArray(privateKey);
-//}
-
 Sender::~Sender()
 {
 	delete this->privateKey;
@@ -54,7 +49,6 @@ std::string Sender::AssembleTransaction(TX tx)
 
 	// First layer of encoding
 	std::string enc = rlp.encode(tx, true);
-	//printf("Raw TX encode: %s\n", rlp.bytesToHex(enc).c_str());
 
 	// Hash the actual transaction
 	uint8_t* hashval = new uint8_t[HASH_LENGTH];
@@ -62,12 +56,10 @@ std::string Sender::AssembleTransaction(TX tx)
 	keccak_update(&context, (const unsigned char*)(uint8_t*)enc.c_str(), (size_t)enc.size());
 	keccak_final(&context, (unsigned char*)hashval);
 	memset((char*)&context, 0, sizeof(SHA3_CTX));
-	printf("Hash: %s\n", this->ByteArrayToCharArray(hashval, HASH_LENGTH));
 
 	// Create the signature for the transaction
 	uint8_t* signature = new uint8_t[SIGNATURE_LENGTH];
 	uECC_sign(this->privateKey, hashval, HASH_LENGTH, signature, uECC_secp256k1());
-	printf("Signature: %s\n", this->ByteArrayToCharArray(signature, SIGNATURE_LENGTH));
 
 	// Obtain the r and s values for the transaction
 	uint8_t* r = new uint8_t[32];
@@ -75,22 +67,28 @@ std::string Sender::AssembleTransaction(TX tx)
 	this->SplitArray(signature, r, 0, 32);
 	this->SplitArray(signature, s, 32, 64);
 
+	// Allocate memory for the char arrays
+	char* r_chars = new char[32 * 2 + 1];
+	char* s_chars = new char[32 * 2 + 1];
+	// Write to the buffers
+	this->ByteArrayToCharArray(r, 32, r_chars);
+	this->ByteArrayToCharArray(s, 32, s_chars);
+
 	// Re-set the r, s and v variables for the transaction
-	tx.r = std::string("0x") + this->ByteArrayToCharArray(r, 32);
-	tx.s = std::string("0x") + this->ByteArrayToCharArray(s, 32);
+	tx.r = std::string("0x") + r_chars;
+	tx.s = std::string("0x") + s_chars;
 	tx.v = "0x1b"; // 27
-	//printf("R: %s\n", tx.r.c_str());
-	//printf("S: %s\n", tx.s.c_str());
 
-	// Get the public key
-	uint8_t* pubKey = this->GetPublicKey();
-
-	int result = uECC_verify(pubKey, hashval, HASH_LENGTH, signature, uECC_secp256k1());
-	printf("Sig match: %s", result ? "true" : "false");
+	// Cleanup
+	delete[] hashval;
+	delete[] signature;
+	delete[] r;
+	delete[] s;
+	delete[] r_chars;
+	delete[] s_chars;
 
 	// Lastly encode the transaction once more
 	std::string encoded = rlp.bytesToHex(rlp.encode(tx, false));
-	//printf("\nTX length: %ld\n\nTX: 0x%s\n", encoded.size(), encoded.c_str());
 
 	return encoded;
 }
@@ -105,7 +103,14 @@ std::string Sender::HashMessage(std::string msg)
 	keccak_final(&context, (unsigned char*)buffer);
 	memset((char*)&context, 0, sizeof(SHA3_CTX));
 
-	std::string s(this->ByteArrayToCharArray(buffer, HASH_LENGTH));
+	char* cbuf = new char[HASH_LENGTH * 2 + 1];
+	this->ByteArrayToCharArray(buffer, HASH_LENGTH, cbuf);
+
+	std::string s(cbuf);
+
+	delete[] buffer;
+	delete[] cbuf;
+
 	return s;
 }
 
@@ -115,11 +120,18 @@ std::string Sender::SignMessage(std::string msgHash)
 	uint8_t* hash = this->CharArrayToByteArray(const_cast<char*>(msgHash.c_str()));
 
 	// Create a signature
-	uint8_t* signature = new uint8_t[SIGNATURE_LENGTH];
-	uECC_sign(this->privateKey, hash, HASH_LENGTH, signature, uECC_secp256k1());
+	uint8_t* sig = new uint8_t[SIGNATURE_LENGTH];
+	uECC_sign(this->privateKey, hash, HASH_LENGTH, sig, uECC_secp256k1());
+
+	char* cbuf = new char[SIGNATURE_LENGTH * 2 + 1];
+	this->ByteArrayToCharArray(sig, SIGNATURE_LENGTH, cbuf);
 
 	// Convert the result back to a std::string
-	std::string s(this->ByteArrayToCharArray(signature, SIGNATURE_LENGTH));
+	std::string s(cbuf);
+
+	delete[] sig;
+	delete[] cbuf;
+
 	return s;
 }
 
@@ -127,9 +139,7 @@ bool Sender::VerifyMessage(std::string publicKey, std::string msgHash, std::stri
 {
 	// Hash
 	uint8_t* pubKey = this->GetPublicKey();
-	printf("Key: %s\n", this->ByteArrayToCharArray(pubKey, HASH_LENGTH));
 
-	//uint8_t* pubKey = this->CharArrayToByteArray(const_cast<char*>(publicKey.c_str()));
 	uint8_t* hash = this->CharArrayToByteArray(const_cast<char*>(msgHash.c_str()));
 	uint8_t* sig = this->CharArrayToByteArray(const_cast<char*>(signature.c_str()));
 
@@ -139,7 +149,13 @@ bool Sender::VerifyMessage(std::string publicKey, std::string msgHash, std::stri
 
 std::string Sender::WalletAddress()
 {
-	std::string s(this->ByteArrayToCharArray(this->GetAddress(this->GetPublicKey()), 20));
+	char* addrBuf = new char[20 * 2 + 1];
+	this->ByteArrayToCharArray(this->GetAddress(this->GetPublicKey()), 20, addrBuf);
+
+	std::string s(addrBuf);
+
+	delete[] addrBuf;
+
 	return "0x" + s;
 }
 
@@ -147,7 +163,10 @@ std::string Sender::PublicKey() {
 	uint8_t* publickey = new uint8_t[64];
 	uECC_compute_public_key(this->privateKey, publickey, uECC_secp256k1());
 
-	return this->ByteArrayToCharArray(this->GetPublicKey(), 64);
+	char* cbuf = new char[64 * 2 + 1];
+	this->ByteArrayToCharArray(this->GetPublicKey(), 64, cbuf);
+
+	return cbuf;
 }
 
 uint8_t* Sender::GetAddress(uint8_t* publickey) {
@@ -163,6 +182,9 @@ uint8_t* Sender::GetAddress(uint8_t* publickey) {
 	memset((char*)&context, 0, sizeof(SHA3_CTX));
 
 	memcpy(address, &pubhash[12], 20);
+
+	delete[] pubhash;
+
 	return address;
 }
 
@@ -174,7 +196,6 @@ uint8_t* Sender::GetPublicKey() {
 }
 
 uint8_t* Sender::CharArrayToByteArray(char* string) {
-
 	if (string == NULL)
 		return NULL;
 
@@ -220,14 +241,12 @@ void Sender::SplitArray(uint8_t src[], uint8_t dest[], uint8_t from, uint8_t to)
 	}
 }
 
-char* Sender::ByteArrayToCharArray(uint8_t* bytes, uint8_t len) {
-
-	char* ret = new char[len * 2 + 1];
+char* Sender::ByteArrayToCharArray(uint8_t* bytes, uint8_t len, char* buffer) {
 	char hexval[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 	for (int j = 0; j < len; j++) {
-		ret[j * 2] = hexval[((bytes[j] >> 4) & 0xF)];
-		ret[(j * 2) + 1] = hexval[(bytes[j]) & 0x0F];
+		buffer[j * 2] = hexval[((bytes[j] >> 4) & 0xF)];
+		buffer[(j * 2) + 1] = hexval[(bytes[j]) & 0x0F];
 	}
-	ret[len * 2] = '\0';
-	return ret;
+	buffer[len * 2] = '\0';
+	return buffer;
 }

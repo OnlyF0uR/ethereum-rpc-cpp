@@ -4,8 +4,6 @@
 #include "json/json.h"
 #include "types.hpp"
 
-// https://eth.wiki/json-rpc/API
-
 class Wrapper;
 
 class Getter
