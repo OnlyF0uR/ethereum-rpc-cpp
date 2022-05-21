@@ -13,7 +13,7 @@ Sender::Sender(Wrapper* wr, std::string privateKey) {
 
 Sender::~Sender()
 {
-	delete this->privateKey;
+	delete[] this->privateKey;
 }
 
 std::string Sender::CreateRawTransaction(
@@ -129,6 +129,7 @@ std::string Sender::SignMessage(std::string msgHash)
 	// Convert the result back to a std::string
 	std::string s(cbuf);
 
+	delete[] hash;
 	delete[] sig;
 	delete[] cbuf;
 
@@ -138,61 +139,74 @@ std::string Sender::SignMessage(std::string msgHash)
 bool Sender::VerifyMessage(std::string publicKey, std::string msgHash, std::string signature)
 {
 	// Hash
-	uint8_t* pubKey = this->GetPublicKey();
+	uint8_t* pubKey = new uint8_t[64];
+	uECC_compute_public_key(this->privateKey, pubKey, uECC_secp256k1());
 
 	uint8_t* hash = this->CharArrayToByteArray(const_cast<char*>(msgHash.c_str()));
 	uint8_t* sig = this->CharArrayToByteArray(const_cast<char*>(signature.c_str()));
 
 	int result = uECC_verify(pubKey, hash, HASH_LENGTH, sig, uECC_secp256k1());
+
+	// Cleanup
+	delete[] pubKey;
+	delete[] hash;
+	delete[] sig;
+
 	return result;
 }
 
 std::string Sender::WalletAddress()
 {
-	char* addrBuf = new char[20 * 2 + 1];
-	this->ByteArrayToCharArray(this->GetAddress(this->GetPublicKey()), 20, addrBuf);
+	// Public key
+	uint8_t* publicKey = new uint8_t[64];
+	uECC_compute_public_key(this->privateKey, publicKey, uECC_secp256k1());
 
-	std::string s(addrBuf);
+	// Wallet address
+	uint8_t* address = new uint8_t[20];
+	this->GetAddress(publicKey, address);
 
-	delete[] addrBuf;
+	// Address char
+	char* addrChar = new char[20 * 2 + 1];
+	this->ByteArrayToCharArray(address, 20, addrChar);
+
+	std::string s(addrChar);
+
+	// Cleanup
+	delete[] publicKey;
+	delete[] address;
+	delete[] addrChar;
 
 	return "0x" + s;
 }
 
 std::string Sender::PublicKey() {
-	uint8_t* publickey = new uint8_t[64];
-	uECC_compute_public_key(this->privateKey, publickey, uECC_secp256k1());
+	uint8_t* publicKey = new uint8_t[64];
+	uECC_compute_public_key(this->privateKey, publicKey, uECC_secp256k1());
 
 	char* cbuf = new char[64 * 2 + 1];
-	this->ByteArrayToCharArray(this->GetPublicKey(), 64, cbuf);
+	this->ByteArrayToCharArray(publicKey, 64, cbuf);
 
-	return cbuf;
+	std::string s(cbuf);
+
+	// Cleanup
+	delete[] publicKey;
+	delete[] cbuf;
+	return s;
 }
 
-uint8_t* Sender::GetAddress(uint8_t* publickey) {
-
-	uint8_t* address = new uint8_t[20];
-	uint8_t* pubhash = new uint8_t[64];
-
+void Sender::GetAddress(uint8_t* publicKey, uint8_t* buffer) {
+	uint8_t* pubHash = new uint8_t[64];
 	SHA3_CTX context;
 
 	keccak_init(&context);
-	keccak_update(&context, (const unsigned char*)publickey, (size_t)64);
-	keccak_final(&context, (unsigned char*)pubhash);
+	keccak_update(&context, (const unsigned char*)publicKey, (size_t)64);
+	keccak_final(&context, (unsigned char*)pubHash);
 	memset((char*)&context, 0, sizeof(SHA3_CTX));
 
-	memcpy(address, &pubhash[12], 20);
+	memcpy(buffer, &pubHash[12], 20);
 
-	delete[] pubhash;
-
-	return address;
-}
-
-uint8_t* Sender::GetPublicKey() {
-	uint8_t* publickey = new uint8_t[64];
-	uECC_compute_public_key(this->privateKey, publickey, uECC_secp256k1());
-
-	return publickey;
+	// Cleanup
+	delete[] pubHash;
 }
 
 uint8_t* Sender::CharArrayToByteArray(char* string) {
@@ -241,12 +255,11 @@ void Sender::SplitArray(uint8_t src[], uint8_t dest[], uint8_t from, uint8_t to)
 	}
 }
 
-char* Sender::ByteArrayToCharArray(uint8_t* bytes, uint8_t len, char* buffer) {
+void Sender::ByteArrayToCharArray(uint8_t* bytes, uint8_t len, char* buffer) {
 	char hexval[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 	for (int j = 0; j < len; j++) {
 		buffer[j * 2] = hexval[((bytes[j] >> 4) & 0xF)];
 		buffer[(j * 2) + 1] = hexval[(bytes[j]) & 0x0F];
 	}
 	buffer[len * 2] = '\0';
-	return buffer;
 }

@@ -38,5 +38,6 @@ int main(int argc, char** argv)
 		"0x"                                               // data
 	);
 	std::cout << "Raw transaction: " << rawTx << "\n";
+
 	return 0;
 }

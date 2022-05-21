@@ -33,10 +33,9 @@ private:
 
 	// Some utilities
 	uint8_t* CharArrayToByteArray(char* string);
+	void ByteArrayToCharArray(uint8_t* bytes, uint8_t len, char* buffer);
 	void SplitArray(uint8_t src[], uint8_t dest[], uint8_t from, uint8_t to);
-	char* ByteArrayToCharArray(uint8_t* bytes, uint8_t len, char* buffer);
-	uint8_t* GetPublicKey();
-	uint8_t* GetAddress(uint8_t* publickey);
+	void GetAddress(uint8_t* publicKey, uint8_t* buffer);
 	std::string AssembleTransaction(TX tx);
 };
 
