@@ -192,6 +192,27 @@ std::string Sender::PublicKey() {
 	return s;
 }
 
+Keypair Sender::CreatePair()
+{
+	uint8_t* pub = new uint8_t[64];
+	uint8_t* priv = new uint8_t[32];
+
+	uECC_make_key(pub, priv, uECC_secp256k1());
+
+	char* pubBuf = new char[64 * 2 + 1];
+	this->ByteArrayToCharArray(pub, 32, pubBuf);
+
+	char* privBuf = new char[32 * 2 + 1];
+	this->ByteArrayToCharArray(priv, 32, privBuf);
+
+	std::string publicKey(pubBuf);
+	std::string privateKey(privBuf);
+
+	return Keypair{
+		publicKey, privateKey
+	};
+}
+
 void Sender::GetAddress(uint8_t* publicKey, uint8_t* buffer) {
 	uint8_t* pubHash = new uint8_t[64];
 	SHA3_CTX context;

@@ -6,6 +6,11 @@
 
 class Wrapper;
 
+struct Keypair
+{
+	std::string publicKey, privateKey;
+};
+
 class Sender
 {
 public:
@@ -26,6 +31,7 @@ public:
 	std::string HashMessage(std::string msg);
 	std::string SignMessage(std::string msgHash);
 	bool VerifyMessage(std::string publicKey, std::string msgHash, std::string signature);
+	Keypair Sender::CreatePair();
 
 private:
 	Wrapper* wrapper;
