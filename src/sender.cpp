@@ -1,10 +1,9 @@
 #include "sender.hpp"
-#include "rlp/RLP.hpp"
 #include "crypto/keccak256.hpp"
 #include "crypto/uECC.hpp"
 
-#define HASH_LENGTH 32
-#define SIGNATURE_LENGTH 64
+constexpr unsigned int HASH_LENGTH = 32;
+constexpr unsigned int SIGNATURE_LENGTH = 32;
 
 Sender::Sender(Wrapper* wr, std::string privateKey) {
 	this->wrapper = wr;
@@ -44,11 +43,10 @@ std::string Sender::CreateRawTransaction(
 std::string Sender::AssembleTransaction(TX tx)
 {
 	// Predefine some variables
-	RLP rlp;
 	SHA3_CTX context;
 
 	// First layer of encoding
-	std::string enc = rlp.encode(tx, true);
+	std::string enc = rlp::encode(tx, true);
 
 	// Hash the actual transaction
 	uint8_t* hashval = new uint8_t[HASH_LENGTH];
@@ -88,7 +86,7 @@ std::string Sender::AssembleTransaction(TX tx)
 	delete[] s_chars;
 
 	// Lastly encode the transaction once more
-	std::string encoded = rlp.bytesToHex(rlp.encode(tx, false));
+	std::string encoded = rlp::bytesToHex(rlp::encode(tx, false));
 
 	return encoded;
 }

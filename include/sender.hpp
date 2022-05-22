@@ -2,7 +2,7 @@
 #define SENDER_DOT_H
 #include "wrapper.hpp"
 #include "json/json.h"
-#include "rlp/RLP.hpp"
+#include "RLP.hpp"
 
 class Wrapper;
 
