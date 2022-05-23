@@ -2,9 +2,14 @@
 #define SENDER_DOT_H
 #include "wrapper.hpp"
 #include "json/json.h"
-#include "rlp/RLP.hpp"
+#include "RLP.hpp"
 
 class Wrapper;
+
+struct Keypair
+{
+	std::string publicKey, privateKey;
+};
 
 class Sender
 {
@@ -26,6 +31,7 @@ public:
 	std::string HashMessage(std::string msg);
 	std::string SignMessage(std::string msgHash);
 	bool VerifyMessage(std::string publicKey, std::string msgHash, std::string signature);
+	Keypair Sender::CreatePair();
 
 private:
 	Wrapper* wrapper;

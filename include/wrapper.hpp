@@ -1,8 +1,8 @@
 #ifndef WRAPPER_DOT_H
 #define WRAPPER_DOT_H
 
-#include "endpoints/getter.hpp"
-#include "endpoints/sender.hpp"
+#include "getter.hpp"
+#include "sender.hpp"
 #include "json/json.h"
 #include <string>
 

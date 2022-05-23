@@ -1,295 +1,118 @@
 /*
- * Copyright (c) 2016-2018 . All Rights Reserved.
- */
-
-#include <stdlib.h>
-#include <string.h>
+  RLP.cpp - RLP library for RLP functions
+*/
 #include "RLP.hpp"
+using namespace std;
 
-#define SIZE_THRESHOLD 56
-#define OFFSET_SHORT_LIST 0xc0
-#define OFFSET_LONG_LIST 0xf7
-#define OFFSET_LONG_ITEM  0xb7
-#define OFFSET_SHORT_ITEM 0x80
-
-static int wallet_copy_rpl(uint8_t* source, uint8_t* destination, uint8_t size, int copyPos)
+string rlp::encode(string s)
 {
-	int ret_val = copyPos;
-	if (size != 0) {
-		memcpy(source, destination, size);
-		ret_val = ret_val + size;
+	if (s.size() == 1 && (unsigned char)s[0] < 128)
+		return s;
+	else {
+		return encodeLength(s.size(), 128) + s;
 	}
-	return ret_val;
 }
 
-static int wallet_copy_rpl(uint8_t* source, uint32_t* destination, uint8_t size, int copyPos)
+string rlp::encode(TX tx, bool initial)
 {
-	int ret_val = copyPos;
-	if (size != 0) {
-		memcpy(source, destination, size);
-		ret_val = ret_val + size;
+	string serialized = hexToRlpEncode(tx.nonce) +
+		hexToRlpEncode(tx.gasPrice) +
+		hexToRlpEncode(tx.gasLimit) +
+		hexToRlpEncode(tx.to) +
+		hexToRlpEncode(tx.value) +
+		hexToRlpEncode(tx.data);
+
+	if (!initial) {
+		serialized += hexToRlpEncode(tx.v) +
+			hexToRlpEncode(tx.r) +
+			hexToRlpEncode(tx.s);
 	}
-	return ret_val;
+
+	return encodeLength(serialized.length(), 192) + serialized;
 }
 
+string rlp::hexToBytes(string s) {
+	char* inp = new char[s.length()];
+	memcpy(inp, s.c_str(), s.length());
 
-static int calculateLengOfV(uint32_t v) {
-	// 1byte
-	if ((v & 0xFF) == v) {
-		return 1;
-		// 2byte
-	}
-	else if ((v & 0xFFFF) == v) {
-		return 2;
-		// 3byte
-	}
-	else if ((v & 0xFFFFFF) == v) {
-		return 3;
-		// 4byte
-	}
-	else if ((v & 0xFFFFFFFF) == v) {
-		return 4;
+	char* dest = new char[sizeof(inp) / 2];
+	hex2bin(inp, dest);
+
+	string res(dest);
+
+	delete[] inp;
+	delete[] dest;
+
+	return res;
+}
+
+string rlp::hexToRlpEncode(string s) {
+	s = removeHexFormatting(s);
+	return encode(hexToBytes(s));
+}
+
+string rlp::removeHexFormatting(string s) {
+	if (s[0] == '0' && s[1] == 'x')
+		return s.substr(2, s.length() - 2);
+	return s;
+}
+
+string rlp::encodeLength(int len, int offset)
+{
+	string temp;
+	if (len < 56) {
+		temp = (char)(len + offset);
+		return temp;
 	}
 	else {
-		return -1;
+		string hexLength = intToHex(len);
+		int	lLength = hexLength.length() / 2;
+		string fByte = intToHex(offset + 55 + lLength);
+		return hexToBytes(fByte + hexLength);
 	}
 }
 
-void wallet_encode_byte(pb_byte_t singleByte, pb_byte_t* new_bytes) {
-	if ((singleByte & 0xFF) == 0) {
-		new_bytes[0] = (pb_byte_t)OFFSET_SHORT_ITEM;
-	}
-	else if ((singleByte & 0xFF) <= 0x7F) {
-		new_bytes[0] = (pb_byte_t)singleByte;
-	}
-	else {
-		new_bytes[0] = (pb_byte_t)(OFFSET_SHORT_ITEM + 1);
-		new_bytes[1] = singleByte;
-	}
+string rlp::intToHex(int n) {
+	stringstream stream;
+	stream << std::hex << n;
+	string result(stream.str());
+	if (result.size() % 2)
+		result = "0x" + result;
+	return result;
 }
 
-void wallet_encode_short(uint16_t singleShort, pb_byte_t* new_bytes) {
-	if ((singleShort & 0xFF) == singleShort)
-		wallet_encode_byte((pb_byte_t)singleShort, new_bytes);
-	else {
-		new_bytes[0] = (pb_byte_t)(OFFSET_SHORT_ITEM + 2);
-		new_bytes[1] = (singleShort >> 8 & 0xFF);
-		new_bytes[2] = (singleShort >> 0 & 0xFF);
+string rlp::bytesToHex(string input)
+{
+	static const char* const lut = "0123456789ABCDEF";
+	size_t len = input.length();
+	std::string output;
+	output.reserve(2 * len);
+	for (size_t i = 0; i < len; ++i)
+	{
+		const unsigned char c = input[i];
+		output.push_back(lut[c >> 4]);
+		output.push_back(lut[c & 15]);
 	}
+	return output;
 }
 
-int wallet_encode_list(EncodeEthereumSignTx* new_msg, EncodeEthereumTxRequest* new_tx,
-	uint64_t* rawTx) {
-	uint32_t totalLength = 0;
-	uint8_t* data;
+int rlp::char2int(char input)
+{
+	if (input >= '0' && input <= '9')
+		return input - '0';
+	if (input >= 'A' && input <= 'F')
+		return input - 'A' + 10;
+	if (input >= 'a' && input <= 'f')
+		return input - 'a' + 10;
 
-	totalLength += new_msg->nonce.size;
-	totalLength += new_msg->gas_price.size;
-	totalLength += new_msg->gas_limit.size;
-	totalLength += new_msg->to.size;
-	totalLength += new_msg->value.size;
-	totalLength += new_msg->data_initial_chunk.size;
-
-	totalLength += calculateLengOfV(new_tx->signature_v);; //tx->signature_v.size
-	totalLength += new_tx->signature_r.size;
-	totalLength += new_tx->signature_s.size;
-
-	int copyPos;
-	if (totalLength < SIZE_THRESHOLD) {
-		data = (uint8_t*)malloc(1 + totalLength);
-		data[0] = (int8_t)(OFFSET_SHORT_LIST + totalLength);
-		copyPos = 1;
-	}
-	else {
-		int tmpLength = totalLength;
-		uint8_t byteNum = 0;
-		while (tmpLength != 0) {
-			++byteNum;
-			tmpLength = tmpLength >> 8;
-		}
-		tmpLength = totalLength;
-		uint8_t* lenBytes;
-		lenBytes = (uint8_t*)malloc(byteNum);
-		int i;
-		for (i = 0; i < byteNum; ++i) {
-			lenBytes[byteNum - 1 - i] =
-				(uint8_t)((tmpLength >> (8 * i)) & 0xFF);
-		}
-		data = (uint8_t*)malloc(1 + byteNum + totalLength);
-		data[0] = (uint8_t)(OFFSET_LONG_LIST + byteNum);
-		memcpy(data + 1, lenBytes, byteNum);
-		copyPos = byteNum + 1;
-		free(lenBytes);
-	}
-
-	copyPos = wallet_copy_rpl(data + copyPos, new_msg->nonce.bytes, new_msg->nonce.size, copyPos);
-	copyPos = wallet_copy_rpl(data + copyPos, new_msg->gas_price.bytes,
-		new_msg->gas_price.size, copyPos);
-	copyPos = wallet_copy_rpl(data + copyPos, new_msg->gas_limit.bytes,
-		new_msg->gas_limit.size, copyPos);
-	copyPos = wallet_copy_rpl(data + copyPos, new_msg->to.bytes,
-		new_msg->to.size, copyPos);
-	copyPos = wallet_copy_rpl(data + copyPos, new_msg->value.bytes,
-		new_msg->value.size, copyPos);
-	copyPos = wallet_copy_rpl(data + copyPos, new_msg->data_initial_chunk.bytes,
-		new_msg->data_initial_chunk.size, copyPos);
-
-	copyPos = wallet_copy_rpl(data + copyPos, &new_tx->signature_v, calculateLengOfV(new_tx->signature_v), copyPos);
-
-	copyPos = wallet_copy_rpl(data + copyPos, new_tx->signature_r.bytes,
-		new_tx->signature_r.size, copyPos);
-	copyPos = wallet_copy_rpl(data + copyPos, new_tx->signature_s.bytes,
-		new_tx->signature_s.size, copyPos);
-
-	memcpy(rawTx, data, copyPos);
-	return copyPos;
+	return 0;
 }
 
-void wallet_encode_element(pb_byte_t* bytes, pb_size_t size,
-	pb_byte_t* new_bytes, pb_size_t* new_size, bool remove_leading_zeros) {
-
-	pb_byte_t* pbytes;
-	pb_size_t psize;
-
-
-	if (remove_leading_zeros) {
-		int leading_count = 0;
-		for (int j = 0; j < size; ++j) {
-			pb_byte_t singleByte = bytes[j];
-			if ((singleByte | 0x00) == 0) {
-				leading_count = leading_count + 1;
-			}
-			else {
-				break;
-			}
-		}
-		if (leading_count > 0) {
-			pbytes = (pb_byte_t*)malloc(size - leading_count);
-			memcpy(pbytes, bytes + 1, (size - leading_count));
-			psize = (pb_size_t)(size - leading_count);
-		}
-		else {
-			pbytes = (pb_byte_t*)malloc(size);
-			memcpy(pbytes, bytes, (size));
-			psize = size;
-		}
+void rlp::hex2bin(const char* src, char* target)
+{
+	while (*src && src[1])
+	{
+		*(target++) = char2int(*src) * 16 + char2int(src[1]);
+		src += 2;
 	}
-	else {
-		pbytes = (pb_byte_t*)malloc(size);
-		memcpy(pbytes, bytes, (size));
-		psize = size;
-	}
-
-	if (psize == 0) {
-		*new_size = 1;
-		new_bytes[0] = (pb_byte_t)OFFSET_SHORT_ITEM;
-	}
-	else if (psize == 1 && pbytes[0] == 0x00) {
-		*new_size = 1;
-		new_bytes[0] = pbytes[0];
-	}
-	else if (psize == 1 && ((pbytes[0] & 0xFF) == 0)) {
-		*new_size = 1;
-		new_bytes[0] = pbytes[0];
-	}
-	else if (psize == 1 && (pbytes[0] & 0xFF) < 0x80) {
-		*new_size = 1;
-		new_bytes[0] = pbytes[0];
-	}
-	else if (psize < SIZE_THRESHOLD) {
-		pb_byte_t length = (pb_byte_t)(OFFSET_SHORT_ITEM + psize);
-		new_bytes[0] = length;
-		memcpy(new_bytes + 1, pbytes, psize);
-		*new_size = psize + 1;
-	}
-	else {
-		int tmpLength = psize;
-		pb_byte_t lengthOfLength = (pb_byte_t)0;
-		while (tmpLength != 0) {
-			++lengthOfLength;
-			tmpLength = tmpLength >> 8;
-		}
-		pb_byte_t* data = (pb_byte_t*)malloc(1 + lengthOfLength + psize);
-		data[0] = (pb_byte_t)(OFFSET_LONG_ITEM + lengthOfLength);
-		tmpLength = psize;
-		int i;
-		for (int i = lengthOfLength; i > 0; --i) {
-			data[i] = (pb_byte_t)(tmpLength & 0xFF);
-			tmpLength = tmpLength >> 8;
-		}
-		memcpy(data + 1 + lengthOfLength, pbytes, psize);
-		memcpy(new_bytes, data, ((1 + lengthOfLength + psize)));
-		*new_size = (1 + lengthOfLength + psize);
-		free(pbytes);
-		free(data);
-	}
-}
-
-void wallet_encode_int(uint32_t singleInt, pb_byte_t* new_bytes) {
-	if ((singleInt & 0xFF) == singleInt) {
-		wallet_encode_byte((pb_byte_t)singleInt, new_bytes);
-	}
-	else if ((singleInt & 0xFFFF) == singleInt) {
-		wallet_encode_short((uint16_t)singleInt, new_bytes);
-	}
-	else if ((singleInt & 0xFFFFFF) == singleInt) {
-		new_bytes[0] = (pb_byte_t)(OFFSET_SHORT_ITEM + 3);
-		new_bytes[1] = (pb_byte_t)(singleInt >> 16);
-		new_bytes[2] = (pb_byte_t)(singleInt >> 8);
-		new_bytes[3] = (pb_byte_t)(singleInt);
-
-	}
-	else {
-		new_bytes[0] = (pb_byte_t)(OFFSET_SHORT_ITEM + 4);
-		new_bytes[1] = (pb_byte_t)(singleInt >> 24);
-		new_bytes[2] = (pb_byte_t)(singleInt >> 16);
-		new_bytes[3] = (pb_byte_t)(singleInt >> 8);
-		new_bytes[4] = (pb_byte_t)(singleInt);
-	}
-}
-
-int size_of_bytes(int str_len) {
-	int out_len = (str_len & 1) ? (str_len + 1) / 2 : str_len / 2;
-	return out_len;
-}
-
-uint8_t strtohex(char c) {
-	if (c >= '0' && c <= '9')
-		return c - '0';
-	if (c >= 'a' && c <= 'f')
-		return c - 'a' + 10;
-	if (c >= 'A' && c <= 'F')
-		return c - 'A' + 10;
-	return 255;
-}
-
-int hex2byte_arr(char* buf, int len, uint8_t* out, int outbuf_size) {
-	int i = len - 1;
-	int out_len = (len & 1) ? (len + 1) / 2 : len / 2;
-	int j = out_len - 1;
-
-	if (j > outbuf_size)
-		return -1; /* Output buffer is smaller than need */
-
-	while (i >= 0) {
-		out[j] = strtohex(buf[i--]);
-		if (i >= 0) {
-			out[j--] |= strtohex(buf[i--]) << 4;
-		}
-	}
-
-	return out_len;
-}
-
-void int8_to_char(uint8_t* buffer, int len, char* out) {
-	const char hex[] = "0123456789abcdef";
-	int max = 2 * len;
-	int i = 0;
-	int j = 0;
-	while (j < len) {
-		out[i++] = hex[(buffer[j] >> 4) & 0xF];
-		out[i++] = hex[buffer[j] & 0xF];
-		j++;
-	}
-	out[i] = '\0';
 }

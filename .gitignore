@@ -1,7 +1,3 @@
-# IDE configuration
 .vs/
-# Output file
-out/
-
-# Ignore the example build files
-main
+build/
+CMakeSettings.json
