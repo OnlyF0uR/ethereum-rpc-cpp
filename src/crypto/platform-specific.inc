@@ -3,7 +3,7 @@
 #ifndef _UECC_PLATFORM_SPECIFIC_H_
 #define _UECC_PLATFORM_SPECIFIC_H_
 
-#include "cr_types.hpp"
+#include "cr_types.h"
 
 #if (defined(_WIN32) || defined(_WIN64))
 /* Windows */

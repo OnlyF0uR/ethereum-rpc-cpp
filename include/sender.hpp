@@ -2,7 +2,6 @@
 #define SENDER_DOT_H
 #include "wrapper.hpp"
 #include "json/json.h"
-#include "RLP.hpp"
 
 class Wrapper;
 
@@ -38,11 +37,8 @@ private:
 	uint8_t* privateKey;
 
 	// Some utilities
-	uint8_t* CharArrayToByteArray(char* string);
-	void ByteArrayToCharArray(uint8_t* bytes, uint8_t len, char* buffer);
-	void SplitArray(uint8_t src[], uint8_t dest[], uint8_t from, uint8_t to);
+	uint8_t* InBytes(char* string);
 	void GetAddress(uint8_t* publicKey, uint8_t* buffer);
-	std::string AssembleTransaction(TX tx);
 };
 
 #endif

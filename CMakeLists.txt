@@ -10,7 +10,9 @@ include_directories(include/ ${CURL_INCLUDE_DIR} ${JSONCPP_INCLUDE_DIR})
 # Add all source files
 file(GLOB SOURCE_FILES
     "src/*.cpp"
-    "src/crypto/*.cpp"
+    "src/rlp/*.c"
+    "src/*.c"
+    "src/crypto/*.c"
 )
 add_library(${PROJECT_NAME} STATIC ${SOURCE_FILES})
 

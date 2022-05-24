@@ -1,7 +1,8 @@
 #ifndef TYPES_DOT_H
 #define TYPES_DOT_H
-#include "InfInt.hpp"
 #include <iostream>
+
+using hex_string = std::string;
 
 // ===============================
 struct Default
@@ -24,13 +25,13 @@ struct Block
 	std::string stateRoot;
 	std::string receiptsRoot;
 	std::string miner;
-	InfInt difficulty;
-	InfInt totalDifficulty;
+	hex_string difficulty;
+	hex_string totalDifficulty;
 	std::string extraData;
 	int size;
-	InfInt gasLimit;
-	InfInt gasUsed;
-	InfInt timestamp;
+	hex_string gasLimit;
+	hex_string gasUsed;
+	hex_string timestamp;
 	Json::Value transactions;
 	Json::Value uncles;
 };
@@ -40,14 +41,14 @@ struct Transaction
 	std::string blockHash;
 	int blockNumber;
 	std::string from;
-	InfInt gas;
-	InfInt gasPrice;
+	hex_string gas;
+	hex_string gasPrice;
 	std::string hash;
 	std::string input;
 	int nonce;
 	std::string to;
 	int transactionIndex;
-	InfInt value;
+	hex_string value;
 	int ecdsaRecoveryId;         // v
 	std::string ecdsaSignatureR; // r
 	std::string ecdsaSignatureS; // s
@@ -60,8 +61,8 @@ struct Receipt
 	std::string blockHash;
 	std::string from;
 	std::string to;
-	InfInt cumulativeGasUsed;
-	InfInt gasUsed;
+	hex_string cumulativeGasUsed;
+	hex_string gasUsed;
 	std::string contractAddress;
 	Json::Value logs;
 	std::string logsBloom;
@@ -126,7 +127,7 @@ struct HashrateResult : Default
 
 struct GasPriceResult : Default
 {
-	InfInt gasPrice;
+	hex_string gasPrice;
 };
 
 struct AccountsResult : Default
@@ -141,7 +142,7 @@ struct BlockNumberResult : Default
 
 struct BalanceResult : Default
 {
-	InfInt balance;
+	hex_string balance;
 };
 
 struct StorageAtResult : Default
@@ -181,7 +182,7 @@ struct CallResult : Default
 
 struct EstimateGas : Default
 {
-	InfInt gasEstimate;
+	hex_string gasEstimate;
 };
 
 struct BlockResult : Default

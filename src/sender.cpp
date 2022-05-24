@@ -1,13 +1,15 @@
 #include "sender.hpp"
-#include "crypto/keccak256.hpp"
-#include "crypto/uECC.hpp"
+#include "crypto/keccak256.h"
+#include "crypto/uECC.h"
+#include "rlp/tx.h"
 
 constexpr unsigned int HASH_LENGTH = 32;
-constexpr unsigned int SIGNATURE_LENGTH = 32;
+constexpr unsigned int SIGNATURE_LENGTH = 64;
+constexpr unsigned int ADDRESS_LENGTH = 20;
 
 Sender::Sender(Wrapper* wr, std::string privateKey) {
 	this->wrapper = wr;
-	this->privateKey = this->CharArrayToByteArray(const_cast<char*>(privateKey.c_str()));
+	this->privateKey = this->InBytes(const_cast<char*>(privateKey.c_str()));
 }
 
 Sender::~Sender()
@@ -24,71 +26,19 @@ std::string Sender::CreateRawTransaction(
 	std::string data
 )
 {
-	TX tx;
-	tx.nonce = nonce;
-	tx.gasPrice = gasPrice;
-	tx.gasLimit = gasLimit;
-	tx.to = to;
-	tx.value = value;
-	tx.data = data;
+	assemble_transaction(
+		nonce.c_str(),
+		gasPrice.c_str(),
+		gasLimit.c_str(),
+		to.c_str(),
+		value.c_str(),
+		data.c_str(),
+		1,
+		this->privateKey
+	);
 
-	// nonce    gasPrice           gasLimit   to                                             value                data
-	// 0x00     0x09184e72a000     0x5208     0x0000000000000000000000000000000000000000     0x11c37937e08000     0x
-	//std::cout << "Transaction: " << tx.nonce << " " << tx.gasPrice << " " << tx.gasLimit << " " << tx.to << " " << tx.value << " " << tx.data << "\n";
-
-	return this->AssembleTransaction(tx);
-
-}
-
-std::string Sender::AssembleTransaction(TX tx)
-{
-	// Predefine some variables
-	SHA3_CTX context;
-
-	// First layer of encoding
-	std::string enc = rlp::encode(tx, true);
-
-	// Hash the actual transaction
-	uint8_t* hashval = new uint8_t[HASH_LENGTH];
-	keccak_init(&context);
-	keccak_update(&context, (const unsigned char*)(uint8_t*)enc.c_str(), (size_t)enc.size());
-	keccak_final(&context, (unsigned char*)hashval);
-	memset((char*)&context, 0, sizeof(SHA3_CTX));
-
-	// Create the signature for the transaction
-	uint8_t* signature = new uint8_t[SIGNATURE_LENGTH];
-	uECC_sign(this->privateKey, hashval, HASH_LENGTH, signature, uECC_secp256k1());
-
-	// Obtain the r and s values for the transaction
-	uint8_t* r = new uint8_t[32];
-	uint8_t* s = new uint8_t[32];
-	this->SplitArray(signature, r, 0, 32);
-	this->SplitArray(signature, s, 32, 64);
-
-	// Allocate memory for the char arrays
-	char* r_chars = new char[32 * 2 + 1];
-	char* s_chars = new char[32 * 2 + 1];
-	// Write to the buffers
-	this->ByteArrayToCharArray(r, 32, r_chars);
-	this->ByteArrayToCharArray(s, 32, s_chars);
-
-	// Re-set the r, s and v variables for the transaction
-	tx.r = std::string("0x") + r_chars;
-	tx.s = std::string("0x") + s_chars;
-	tx.v = "0x1b"; // 27
-
-	// Cleanup
-	delete[] hashval;
-	delete[] signature;
-	delete[] r;
-	delete[] s;
-	delete[] r_chars;
-	delete[] s_chars;
-
-	// Lastly encode the transaction once more
-	std::string encoded = rlp::bytesToHex(rlp::encode(tx, false));
-
-	return encoded;
+	// TODO: Actually connect it again
+	return "";
 }
 
 std::string Sender::HashMessage(std::string msg)
@@ -102,7 +52,7 @@ std::string Sender::HashMessage(std::string msg)
 	memset((char*)&context, 0, sizeof(SHA3_CTX));
 
 	char* cbuf = new char[HASH_LENGTH * 2 + 1];
-	this->ByteArrayToCharArray(buffer, HASH_LENGTH, cbuf);
+	byte_array_2_char_array(buffer, HASH_LENGTH, cbuf);
 
 	std::string s(cbuf);
 
@@ -115,14 +65,14 @@ std::string Sender::HashMessage(std::string msg)
 std::string Sender::SignMessage(std::string msgHash)
 {
 	// Convert the hash
-	uint8_t* hash = this->CharArrayToByteArray(const_cast<char*>(msgHash.c_str()));
+	uint8_t* hash = this->InBytes(const_cast<char*>(msgHash.c_str()));
 
 	// Create a signature
 	uint8_t* sig = new uint8_t[SIGNATURE_LENGTH];
 	uECC_sign(this->privateKey, hash, HASH_LENGTH, sig, uECC_secp256k1());
 
 	char* cbuf = new char[SIGNATURE_LENGTH * 2 + 1];
-	this->ByteArrayToCharArray(sig, SIGNATURE_LENGTH, cbuf);
+	byte_array_2_char_array(sig, SIGNATURE_LENGTH, cbuf);
 
 	// Convert the result back to a std::string
 	std::string s(cbuf);
@@ -140,8 +90,8 @@ bool Sender::VerifyMessage(std::string publicKey, std::string msgHash, std::stri
 	uint8_t* pubKey = new uint8_t[64];
 	uECC_compute_public_key(this->privateKey, pubKey, uECC_secp256k1());
 
-	uint8_t* hash = this->CharArrayToByteArray(const_cast<char*>(msgHash.c_str()));
-	uint8_t* sig = this->CharArrayToByteArray(const_cast<char*>(signature.c_str()));
+	uint8_t* hash = this->InBytes(const_cast<char*>(msgHash.c_str()));
+	uint8_t* sig = this->InBytes(const_cast<char*>(signature.c_str()));
 
 	int result = uECC_verify(pubKey, hash, HASH_LENGTH, sig, uECC_secp256k1());
 
@@ -165,7 +115,7 @@ std::string Sender::WalletAddress()
 
 	// Address char
 	char* addrChar = new char[20 * 2 + 1];
-	this->ByteArrayToCharArray(address, 20, addrChar);
+	byte_array_2_char_array(address, ADDRESS_LENGTH, addrChar);
 
 	std::string s(addrChar);
 
@@ -182,7 +132,7 @@ std::string Sender::PublicKey() {
 	uECC_compute_public_key(this->privateKey, publicKey, uECC_secp256k1());
 
 	char* cbuf = new char[64 * 2 + 1];
-	this->ByteArrayToCharArray(publicKey, 64, cbuf);
+	byte_array_2_char_array(publicKey, 64, cbuf);
 
 	std::string s(cbuf);
 
@@ -200,10 +150,10 @@ Keypair Sender::CreatePair()
 	uECC_make_key(pub, priv, uECC_secp256k1());
 
 	char* pubBuf = new char[64 * 2 + 1];
-	this->ByteArrayToCharArray(pub, 32, pubBuf);
+	byte_array_2_char_array(pub, 32, pubBuf);
 
 	char* privBuf = new char[32 * 2 + 1];
-	this->ByteArrayToCharArray(priv, 32, privBuf);
+	byte_array_2_char_array(priv, 32, privBuf);
 
 	std::string publicKey(pubBuf);
 	std::string privateKey(privBuf);
@@ -228,7 +178,7 @@ void Sender::GetAddress(uint8_t* publicKey, uint8_t* buffer) {
 	delete[] pubHash;
 }
 
-uint8_t* Sender::CharArrayToByteArray(char* string) {
+uint8_t* Sender::InBytes(char* string) {
 	if (string == NULL)
 		return NULL;
 
@@ -262,23 +212,4 @@ uint8_t* Sender::CharArrayToByteArray(char* string) {
 	}
 
 	return data;
-}
-
-void Sender::SplitArray(uint8_t src[], uint8_t dest[], uint8_t from, uint8_t to)
-{
-	int i = 0;
-	for (int ctr = from; ctr < to; ctr++)
-	{
-		dest[i] = src[ctr];
-		i++;
-	}
-}
-
-void Sender::ByteArrayToCharArray(uint8_t* bytes, uint8_t len, char* buffer) {
-	char hexval[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-	for (int j = 0; j < len; j++) {
-		buffer[j * 2] = hexval[((bytes[j] >> 4) & 0xF)];
-		buffer[(j * 2) + 1] = hexval[(bytes[j]) & 0x0F];
-	}
-	buffer[len * 2] = '\0';
 }

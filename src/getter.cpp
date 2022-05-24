@@ -1,4 +1,5 @@
 #include "getter.hpp"
+#include "InfInt.h"
 
 Getter::Getter(Wrapper* wr)
 {
@@ -173,6 +174,30 @@ BlockNumberResult* Getter::BlockNumber()
 	return result;
 }
 
+void Hex2Char(const char* szHex, unsigned char& rch)
+{
+	rch = 0;
+	for (int i = 0; i < 2; i++)
+	{
+		if (*(szHex + i) >= '0' && *(szHex + i) <= '9')
+			rch = (rch << 4) + (*(szHex + i) - '0');
+		else if (*(szHex + i) >= 'A' && *(szHex + i) <= 'F')
+			rch = (rch << 4) + (*(szHex + i) - 'A' + 10);
+		else
+			break;
+	}
+}
+
+void HexStrToCharStr(const char* hexStr, unsigned char* decStr, int n)
+{
+	unsigned char d_ch;
+	for (int i = 0; i < n; i++)
+	{
+		Hex2Char(hexStr + 2 * i, d_ch);
+		decStr[i] = d_ch;
+	}
+}
+
 BalanceResult* Getter::Balance(std::string address, std::string tag)
 {
 	Json::Value params(Json::arrayValue);
@@ -187,7 +212,7 @@ BalanceResult* Getter::Balance(std::string address, std::string tag)
 	BalanceResult* result = new BalanceResult();
 	result->jsonrpc = buffer["jsonrpc"].asString();
 	result->id = buffer["id"].asInt();
-	result->balance = InfInt(buffer["result"].asString());
+	result->balance = buffer["result"].asString();
 
 	return result;
 }
