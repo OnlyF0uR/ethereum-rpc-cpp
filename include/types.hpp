@@ -1,8 +1,7 @@
 #ifndef TYPES_DOT_H
 #define TYPES_DOT_H
 #include <iostream>
-
-using hex_string = std::string;
+#include <boost/multiprecision/cpp_int.hpp>
 
 // ===============================
 struct Default
@@ -25,13 +24,13 @@ struct Block
 	std::string stateRoot;
 	std::string receiptsRoot;
 	std::string miner;
-	hex_string difficulty;
-	hex_string totalDifficulty;
+	boost::multiprecision::uint256_t difficulty;
+	boost::multiprecision::uint256_t totalDifficulty;
 	std::string extraData;
 	int size;
-	hex_string gasLimit;
-	hex_string gasUsed;
-	hex_string timestamp;
+	boost::multiprecision::uint256_t gasLimit;
+	boost::multiprecision::uint256_t gasUsed;
+	boost::multiprecision::uint256_t timestamp;
 	Json::Value transactions;
 	Json::Value uncles;
 };
@@ -41,14 +40,14 @@ struct Transaction
 	std::string blockHash;
 	int blockNumber;
 	std::string from;
-	hex_string gas;
-	hex_string gasPrice;
+	boost::multiprecision::uint256_t gas;
+	boost::multiprecision::uint256_t gasPrice;
 	std::string hash;
 	std::string input;
 	int nonce;
 	std::string to;
 	int transactionIndex;
-	hex_string value;
+	boost::multiprecision::uint256_t value;
 	int ecdsaRecoveryId;         // v
 	std::string ecdsaSignatureR; // r
 	std::string ecdsaSignatureS; // s
@@ -61,8 +60,8 @@ struct Receipt
 	std::string blockHash;
 	std::string from;
 	std::string to;
-	hex_string cumulativeGasUsed;
-	hex_string gasUsed;
+	boost::multiprecision::uint256_t cumulativeGasUsed;
+	boost::multiprecision::uint256_t gasUsed;
 	std::string contractAddress;
 	Json::Value logs;
 	std::string logsBloom;
@@ -127,7 +126,7 @@ struct HashrateResult : Default
 
 struct GasPriceResult : Default
 {
-	hex_string gasPrice;
+	boost::multiprecision::uint256_t gasPrice;
 };
 
 struct AccountsResult : Default
@@ -142,7 +141,7 @@ struct BlockNumberResult : Default
 
 struct BalanceResult : Default
 {
-	hex_string balance;
+	boost::multiprecision::uint256_t balance;
 };
 
 struct StorageAtResult : Default
@@ -182,7 +181,7 @@ struct CallResult : Default
 
 struct EstimateGas : Default
 {
-	hex_string gasEstimate;
+	boost::multiprecision::uint256_t gasEstimate;
 };
 
 struct BlockResult : Default

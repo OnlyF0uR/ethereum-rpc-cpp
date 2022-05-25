@@ -6,7 +6,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	void assemble_transaction(
+	char* assemble_transaction(
 		const char* nonce,
 		const char* gas_price,
 		const char* gas_limit,

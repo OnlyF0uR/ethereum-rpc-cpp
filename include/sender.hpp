@@ -17,19 +17,19 @@ public:
 	~Sender();
 
 	std::string CreateRawTransaction(
-		std::string nonce,
-		std::string gasPrice,
-		std::string gasLimit,
-		std::string to,
-		std::string value,
-		std::string data
+		std::string& nonce,
+		std::string& gasPrice,
+		std::string& gasLimit,
+		std::string& to,
+		std::string& value,
+		std::string& data
 	);
 	std::string WalletAddress();
 	std::string PublicKey();
 
-	std::string HashMessage(std::string msg);
-	std::string SignMessage(std::string msgHash);
-	bool VerifyMessage(std::string publicKey, std::string msgHash, std::string signature);
+	std::string HashMessage(std::string& msg);
+	std::string SignMessage(std::string& msgHash);
+	bool VerifyMessage(std::string& publicKey, std::string& msgHash, std::string& signature);
 	Keypair Sender::CreatePair();
 
 private:

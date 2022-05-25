@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Add the include directories including CURL and JSONCPP
-include_directories(include/ ${CURL_INCLUDE_DIR} ${JSONCPP_INCLUDE_DIR})
+include_directories(include/ ${CURL_INCLUDE_DIR} ${JSONCPP_INCLUDE_DIR} ${BOOST_INCLUDEDIR})
 
 # Add all source files
 file(GLOB SOURCE_FILES

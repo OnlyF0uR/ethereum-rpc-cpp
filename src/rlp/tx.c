@@ -41,7 +41,7 @@ int encode_b(EthereumSignTx* msg, EthereumSig* tx, uint64_t* rawTx) {
 	return length;
 }
 
-void assemble_transaction(
+char* assemble_transaction(
 	const char* nonce,
 	const char* gas_price,
 	const char* gas_limit,
@@ -51,7 +51,7 @@ void assemble_transaction(
 	int chainId,
 	uint8_t* privateKey
 ) {
-	static char rawTx[256];
+	char rawTx[256];
 	EthereumSignTx tx;
 	EthereumSig signature;
 	uint64_t raw_tx_bytes[24];
@@ -117,5 +117,5 @@ void assemble_transaction(
 	int l = encode_b(&tx, &signature, raw_tx_bytes);
 	int8_to_char((uint8_t*)raw_tx_bytes, l, rawTx);
 
-	printf("TX: 0x%s\nLength: %d", rawTx, strlen(rawTx));
+	return rawTx;
 }

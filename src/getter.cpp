@@ -1,5 +1,4 @@
 #include "getter.hpp"
-#include "InfInt.h"
 
 Getter::Getter(Wrapper* wr)
 {
@@ -174,31 +173,7 @@ BlockNumberResult* Getter::BlockNumber()
 	return result;
 }
 
-void Hex2Char(const char* szHex, unsigned char& rch)
-{
-	rch = 0;
-	for (int i = 0; i < 2; i++)
-	{
-		if (*(szHex + i) >= '0' && *(szHex + i) <= '9')
-			rch = (rch << 4) + (*(szHex + i) - '0');
-		else if (*(szHex + i) >= 'A' && *(szHex + i) <= 'F')
-			rch = (rch << 4) + (*(szHex + i) - 'A' + 10);
-		else
-			break;
-	}
-}
-
-void HexStrToCharStr(const char* hexStr, unsigned char* decStr, int n)
-{
-	unsigned char d_ch;
-	for (int i = 0; i < n; i++)
-	{
-		Hex2Char(hexStr + 2 * i, d_ch);
-		decStr[i] = d_ch;
-	}
-}
-
-BalanceResult* Getter::Balance(std::string address, std::string tag)
+BalanceResult* Getter::Balance(std::string& address, const std::string& tag)
 {
 	Json::Value params(Json::arrayValue);
 	params.append(address);
@@ -212,12 +187,14 @@ BalanceResult* Getter::Balance(std::string address, std::string tag)
 	BalanceResult* result = new BalanceResult();
 	result->jsonrpc = buffer["jsonrpc"].asString();
 	result->id = buffer["id"].asInt();
-	result->balance = buffer["result"].asString();
+
+	boost::multiprecision::uint256_t n(buffer["result"].asString());
+	result->balance = n;
 
 	return result;
 }
 
-StorageAtResult* Getter::StorageAt(std::string address, int pos, std::string tag)
+StorageAtResult* Getter::StorageAt(std::string& address, int pos, const std::string& tag)
 {
 	Json::Value params(Json::arrayValue);
 	params.append(address);
@@ -237,7 +214,7 @@ StorageAtResult* Getter::StorageAt(std::string address, int pos, std::string tag
 	return result;
 }
 
-TransactionCountResult* Getter::TransactionCount(std::string address, std::string tag)
+TransactionCountResult* Getter::TransactionCount(std::string& address, const std::string& tag)
 {
 	Json::Value params(Json::arrayValue);
 	params.append(address);
@@ -256,7 +233,7 @@ TransactionCountResult* Getter::TransactionCount(std::string address, std::strin
 	return result;
 }
 
-TransactionCountResult* Getter::BlockTransactionCountByHash(std::string blockHash)
+TransactionCountResult* Getter::BlockTransactionCountByHash(std::string& blockHash)
 {
 	Json::Value params(Json::arrayValue);
 	params.append(blockHash);
@@ -292,7 +269,7 @@ TransactionCountResult* Getter::BlockTransactionCountByNumber(int blockNumber)
 	return result;
 }
 
-UncleCountResult* Getter::UncleCountByBlockHash(std::string blockHash)
+UncleCountResult* Getter::UncleCountByBlockHash(std::string& blockHash)
 {
 	Json::Value params(Json::arrayValue);
 	params.append(blockHash);
@@ -328,7 +305,7 @@ UncleCountResult* Getter::UncleCountByBlockNumber(int blockNumber)
 	return result;
 }
 
-CodeResult* Getter::Code(std::string address, std::string tag)
+CodeResult* Getter::Code(std::string& address, const std::string& tag)
 {
 	Json::Value params(Json::arrayValue);
 	params.append(address);

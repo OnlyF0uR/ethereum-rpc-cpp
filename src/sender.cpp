@@ -18,15 +18,15 @@ Sender::~Sender()
 }
 
 std::string Sender::CreateRawTransaction(
-	std::string nonce,
-	std::string gasPrice,
-	std::string gasLimit,
-	std::string to,
-	std::string value,
-	std::string data
+	std::string& nonce,
+	std::string& gasPrice,
+	std::string& gasLimit,
+	std::string& to,
+	std::string& value,
+	std::string& data
 )
 {
-	assemble_transaction(
+	char* rawTx = assemble_transaction(
 		nonce.c_str(),
 		gasPrice.c_str(),
 		gasLimit.c_str(),
@@ -37,11 +37,11 @@ std::string Sender::CreateRawTransaction(
 		this->privateKey
 	);
 
-	// TODO: Actually connect it again
-	return "";
+	std::string s(rawTx);
+	return "0x" + s;
 }
 
-std::string Sender::HashMessage(std::string msg)
+std::string Sender::HashMessage(std::string& msg)
 {
 	SHA3_CTX context;
 	uint8_t* buffer = new uint8_t[HASH_LENGTH];
@@ -62,7 +62,7 @@ std::string Sender::HashMessage(std::string msg)
 	return s;
 }
 
-std::string Sender::SignMessage(std::string msgHash)
+std::string Sender::SignMessage(std::string& msgHash)
 {
 	// Convert the hash
 	uint8_t* hash = this->InBytes(const_cast<char*>(msgHash.c_str()));
@@ -84,7 +84,7 @@ std::string Sender::SignMessage(std::string msgHash)
 	return s;
 }
 
-bool Sender::VerifyMessage(std::string publicKey, std::string msgHash, std::string signature)
+bool Sender::VerifyMessage(std::string& publicKey, std::string& msgHash, std::string& signature)
 {
 	// Hash
 	uint8_t* pubKey = new uint8_t[64];
