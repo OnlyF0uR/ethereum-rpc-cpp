@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.9)
+﻿cmake_minimum_required(VERSION 3.22)
 project("eth-rpc" VERSION 1.0.0 DESCRIPTION "Wrapper for the ethereum json rpc")
 
 set(CMAKE_CXX_STANDARD 11)

@@ -1,15 +1,15 @@
-#ifndef GETTER_DOT_H
-#define GETTER_DOT_H
+#ifndef API_DOT_H
+#define API_DOT_H
 #include "wrapper.hpp"
 #include "json/json.h"
 #include "types.hpp"
 
 class Wrapper;
 
-class Getter
+class Api
 {
 public:
-	Getter(Wrapper* wr);
+	Api(Wrapper* wr);
 
 	NetVersionResult* NetVersion();
 	NetListingResult* NetListing();
@@ -31,13 +31,7 @@ public:
 	UncleCountResult*			UncleCountByBlockHash(std::string& blockHash);
 	UncleCountResult*			UncleCountByBlockNumber(int blockNumber);
 	CodeResult*					Code(std::string& address, const std::string& tag);
-
-	// Blocks
-	// BlockResult *BlockByHash(std::string hash, bool full);
-	// BlockResult *BlockByNumber(std::string tag, bool full);
-	// Transactions
-	// TransactionResult *TransactionByHash(std::string hash);
-	// TransactionCountResult *TransactionCount(std::string address, std::string tag);
+	RawTransactionResult*		RawTransaction(std::string& rawTx);
 
 private:
 	Wrapper* wrapper;

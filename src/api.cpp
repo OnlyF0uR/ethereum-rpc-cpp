@@ -1,11 +1,11 @@
-#include "getter.hpp"
+#include "api.hpp"
 
-Getter::Getter(Wrapper* wr)
+Api::Api(Wrapper* wr)
 {
 	wrapper = wr;
 }
 
-NetVersionResult* Getter::NetVersion()
+NetVersionResult* Api::NetVersion()
 {
 	Json::Value buffer;
 	wrapper->SendJson("net_version", &buffer);
@@ -20,7 +20,7 @@ NetVersionResult* Getter::NetVersion()
 	return result;
 }
 
-NetListingResult* Getter::NetListing()
+NetListingResult* Api::NetListing()
 {
 	Json::Value buffer;
 	wrapper->SendJson("net_listening", &buffer);
@@ -35,7 +35,7 @@ NetListingResult* Getter::NetListing()
 	return result;
 }
 
-NetPeerCountResult* Getter::NetPeerCount()
+NetPeerCountResult* Api::NetPeerCount()
 {
 	Json::Value buffer;
 	wrapper->SendJson("net_peerCount", &buffer);
@@ -50,7 +50,7 @@ NetPeerCountResult* Getter::NetPeerCount()
 	return result;
 }
 
-ProtocolVersionResult* Getter::ProtocolVersion()
+ProtocolVersionResult* Api::ProtocolVersion()
 {
 	Json::Value buffer;
 	wrapper->SendJson("eth_protocolVersion", &buffer);
@@ -65,7 +65,7 @@ ProtocolVersionResult* Getter::ProtocolVersion()
 	return result;
 }
 
-SyncingResult* Getter::Syncing()
+SyncingResult* Api::Syncing()
 {
 	Json::Value buffer;
 	wrapper->SendJson("eth_syncing", &buffer);
@@ -83,7 +83,7 @@ SyncingResult* Getter::Syncing()
 	return result;
 }
 
-CoinbaseResult* Getter::Coinbase()
+CoinbaseResult* Api::Coinbase()
 {
 	Json::Value buffer;
 	wrapper->SendJson("eth_coinbase", &buffer);
@@ -98,7 +98,7 @@ CoinbaseResult* Getter::Coinbase()
 	return result;
 }
 
-MiningResult* Getter::Mining()
+MiningResult* Api::Mining()
 {
 	Json::Value buffer;
 	wrapper->SendJson("eth_mining", &buffer);
@@ -113,7 +113,7 @@ MiningResult* Getter::Mining()
 	return result;
 }
 
-HashrateResult* Getter::Hashrate()
+HashrateResult* Api::Hashrate()
 {
 	Json::Value buffer;
 	wrapper->SendJson("eth_hashrate", &buffer);
@@ -128,7 +128,7 @@ HashrateResult* Getter::Hashrate()
 	return result;
 }
 
-GasPriceResult* Getter::GasPrice()
+GasPriceResult* Api::GasPrice()
 {
 	Json::Value buffer;
 	wrapper->SendJson("eth_gasPrice", &buffer);
@@ -143,7 +143,7 @@ GasPriceResult* Getter::GasPrice()
 	return result;
 }
 
-AccountsResult* Getter::Accounts()
+AccountsResult* Api::Accounts()
 {
 	Json::Value buffer;
 	wrapper->SendJson("eth_accounts", &buffer);
@@ -158,7 +158,7 @@ AccountsResult* Getter::Accounts()
 	return result;
 }
 
-BlockNumberResult* Getter::BlockNumber()
+BlockNumberResult* Api::BlockNumber()
 {
 	Json::Value buffer;
 	wrapper->SendJson("eth_blockNumber", &buffer);
@@ -173,7 +173,7 @@ BlockNumberResult* Getter::BlockNumber()
 	return result;
 }
 
-BalanceResult* Getter::Balance(std::string& address, const std::string& tag)
+BalanceResult* Api::Balance(std::string& address, const std::string& tag)
 {
 	Json::Value params(Json::arrayValue);
 	params.append(address);
@@ -194,7 +194,7 @@ BalanceResult* Getter::Balance(std::string& address, const std::string& tag)
 	return result;
 }
 
-StorageAtResult* Getter::StorageAt(std::string& address, int pos, const std::string& tag)
+StorageAtResult* Api::StorageAt(std::string& address, int pos, const std::string& tag)
 {
 	Json::Value params(Json::arrayValue);
 	params.append(address);
@@ -214,7 +214,7 @@ StorageAtResult* Getter::StorageAt(std::string& address, int pos, const std::str
 	return result;
 }
 
-TransactionCountResult* Getter::TransactionCount(std::string& address, const std::string& tag)
+TransactionCountResult* Api::TransactionCount(std::string& address, const std::string& tag)
 {
 	Json::Value params(Json::arrayValue);
 	params.append(address);
@@ -233,7 +233,7 @@ TransactionCountResult* Getter::TransactionCount(std::string& address, const std
 	return result;
 }
 
-TransactionCountResult* Getter::BlockTransactionCountByHash(std::string& blockHash)
+TransactionCountResult* Api::BlockTransactionCountByHash(std::string& blockHash)
 {
 	Json::Value params(Json::arrayValue);
 	params.append(blockHash);
@@ -251,7 +251,7 @@ TransactionCountResult* Getter::BlockTransactionCountByHash(std::string& blockHa
 	return result;
 }
 
-TransactionCountResult* Getter::BlockTransactionCountByNumber(int blockNumber)
+TransactionCountResult* Api::BlockTransactionCountByNumber(int blockNumber)
 {
 	Json::Value params(Json::arrayValue);
 	params.append(wrapper->ToHexString(blockNumber));
@@ -269,7 +269,7 @@ TransactionCountResult* Getter::BlockTransactionCountByNumber(int blockNumber)
 	return result;
 }
 
-UncleCountResult* Getter::UncleCountByBlockHash(std::string& blockHash)
+UncleCountResult* Api::UncleCountByBlockHash(std::string& blockHash)
 {
 	Json::Value params(Json::arrayValue);
 	params.append(blockHash);
@@ -287,7 +287,7 @@ UncleCountResult* Getter::UncleCountByBlockHash(std::string& blockHash)
 	return result;
 }
 
-UncleCountResult* Getter::UncleCountByBlockNumber(int blockNumber)
+UncleCountResult* Api::UncleCountByBlockNumber(int blockNumber)
 {
 	Json::Value params(Json::arrayValue);
 	params.append(wrapper->ToHexString(blockNumber));
@@ -305,7 +305,7 @@ UncleCountResult* Getter::UncleCountByBlockNumber(int blockNumber)
 	return result;
 }
 
-CodeResult* Getter::Code(std::string& address, const std::string& tag)
+CodeResult* Api::Code(std::string& address, const std::string& tag)
 {
 	Json::Value params(Json::arrayValue);
 	params.append(address);
@@ -322,4 +322,20 @@ CodeResult* Getter::Code(std::string& address, const std::string& tag)
 	result->code = buffer["result"].asString();
 
 	return result;
+}
+
+RawTransactionResult* Api::RawTransaction(std::string& rawTx)
+{
+	Json::Value params(Json::arrayValue);
+	params.append(rawTx);
+
+	Json::Value buffer;
+	wrapper->SendJson("eth_sendRawTransaction", &buffer);
+
+	VALIDATE_RESPONSE(buffer);
+
+	RawTransactionResult* result = new RawTransactionResult();
+	result->jsonrpc = buffer["jsonrpc"].asString();
+	result->id = buffer["id"].asInt();
+	result->receipt = buffer["result"].asString();
 }

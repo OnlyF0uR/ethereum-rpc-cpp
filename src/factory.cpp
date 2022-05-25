@@ -1,4 +1,4 @@
-#include "sender.hpp"
+#include "factory.hpp"
 #include "crypto/keccak256.h"
 #include "crypto/uECC.h"
 #include "rlp/tx.h"
@@ -7,17 +7,17 @@ constexpr unsigned int HASH_LENGTH = 32;
 constexpr unsigned int SIGNATURE_LENGTH = 64;
 constexpr unsigned int ADDRESS_LENGTH = 20;
 
-Sender::Sender(Wrapper* wr, std::string privateKey) {
+Factory::Factory(Wrapper* wr, std::string privateKey) {
 	this->wrapper = wr;
 	this->privateKey = this->InBytes(const_cast<char*>(privateKey.c_str()));
 }
 
-Sender::~Sender()
+Factory::~Factory()
 {
 	delete[] this->privateKey;
 }
 
-std::string Sender::CreateRawTransaction(
+std::string Factory::CreateRawTransaction(
 	std::string& nonce,
 	std::string& gasPrice,
 	std::string& gasLimit,
@@ -41,7 +41,7 @@ std::string Sender::CreateRawTransaction(
 	return "0x" + s;
 }
 
-std::string Sender::HashMessage(std::string& msg)
+std::string Factory::HashMessage(std::string& msg)
 {
 	SHA3_CTX context;
 	uint8_t* buffer = new uint8_t[HASH_LENGTH];
@@ -62,7 +62,7 @@ std::string Sender::HashMessage(std::string& msg)
 	return s;
 }
 
-std::string Sender::SignMessage(std::string& msgHash)
+std::string Factory::SignMessage(std::string& msgHash)
 {
 	// Convert the hash
 	uint8_t* hash = this->InBytes(const_cast<char*>(msgHash.c_str()));
@@ -84,7 +84,7 @@ std::string Sender::SignMessage(std::string& msgHash)
 	return s;
 }
 
-bool Sender::VerifyMessage(std::string& publicKey, std::string& msgHash, std::string& signature)
+bool Factory::VerifyMessage(std::string& publicKey, std::string& msgHash, std::string& signature)
 {
 	// Hash
 	uint8_t* pubKey = new uint8_t[64];
@@ -103,7 +103,7 @@ bool Sender::VerifyMessage(std::string& publicKey, std::string& msgHash, std::st
 	return result;
 }
 
-std::string Sender::WalletAddress()
+std::string Factory::WalletAddress()
 {
 	// Public key
 	uint8_t* publicKey = new uint8_t[64];
@@ -127,7 +127,7 @@ std::string Sender::WalletAddress()
 	return "0x" + s;
 }
 
-std::string Sender::PublicKey() {
+std::string Factory::PublicKey() {
 	uint8_t* publicKey = new uint8_t[64];
 	uECC_compute_public_key(this->privateKey, publicKey, uECC_secp256k1());
 
@@ -142,7 +142,7 @@ std::string Sender::PublicKey() {
 	return s;
 }
 
-Keypair Sender::CreatePair()
+Keypair Factory::CreatePair()
 {
 	uint8_t* pub = new uint8_t[64];
 	uint8_t* priv = new uint8_t[32];
@@ -163,7 +163,8 @@ Keypair Sender::CreatePair()
 	};
 }
 
-void Sender::GetAddress(uint8_t* publicKey, uint8_t* buffer) {
+// =================================
+void Factory::GetAddress(uint8_t* publicKey, uint8_t* buffer) {
 	uint8_t* pubHash = new uint8_t[64];
 	SHA3_CTX context;
 
@@ -178,7 +179,7 @@ void Sender::GetAddress(uint8_t* publicKey, uint8_t* buffer) {
 	delete[] pubHash;
 }
 
-uint8_t* Sender::InBytes(char* string) {
+uint8_t* Factory::InBytes(char* string) {
 	if (string == NULL)
 		return NULL;
 

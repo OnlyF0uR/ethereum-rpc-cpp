@@ -5,8 +5,9 @@ Library written in C++ 11 that serves as a wrapper / handler for the ethereum JS
 Please note that this project is still a WIP. Features are expected to be added and the codebase possibly to be reworked / refactored.
 
 ### Dependencies
- - [libcurl](https://github.com/curl/curl)
+ - [libcurl](https://curl.se/libcurl/c/)
  - [jsoncpp](https://github.com/open-source-parsers/jsoncpp)
+ - [boost](https://www.boost.org/)
 
 ### Building
 ```bash

@@ -1,5 +1,5 @@
-#ifndef SENDER_DOT_H
-#define SENDER_DOT_H
+#ifndef FACTORY_DOT_H
+#define FACTORY_DOT_H
 #include "wrapper.hpp"
 #include "json/json.h"
 
@@ -10,11 +10,11 @@ struct Keypair
 	std::string publicKey, privateKey;
 };
 
-class Sender
+class Factory
 {
 public:
-	Sender(Wrapper* wr, std::string privateKey);
-	~Sender();
+	Factory(Wrapper* wr, std::string privateKey);
+	~Factory();
 
 	std::string CreateRawTransaction(
 		std::string& nonce,
@@ -30,7 +30,7 @@ public:
 	std::string HashMessage(std::string& msg);
 	std::string SignMessage(std::string& msgHash);
 	bool VerifyMessage(std::string& publicKey, std::string& msgHash, std::string& signature);
-	Keypair Sender::CreatePair();
+	Keypair CreatePair();
 
 private:
 	Wrapper* wrapper;

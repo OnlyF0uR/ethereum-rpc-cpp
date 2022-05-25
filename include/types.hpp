@@ -164,19 +164,9 @@ struct CodeResult : Default
 	std::string code;
 };
 
-struct SignResult : Default
+struct RawTransactionResult : Default
 {
-	std::string signature;
-};
-
-struct SendResult : Default
-{
-	std::string hash;
-};
-
-struct CallResult : Default
-{
-	std::string value;
+	std::string receipt;
 };
 
 struct EstimateGas : Default
