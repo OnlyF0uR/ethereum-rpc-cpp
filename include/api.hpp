@@ -1,7 +1,7 @@
 #ifndef API_DOT_H
 #define API_DOT_H
 #include "wrapper.hpp"
-#include "json/json.h"
+#include "jsoncpp/json/json.h"
 #include "types.hpp"
 
 class Wrapper;

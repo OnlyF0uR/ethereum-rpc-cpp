@@ -1,7 +1,7 @@
 #ifndef TX_H
 #define TX_H
 
-#include "rlp.h"
+#include "RLP.h"
 
 #ifdef __cplusplus
 extern "C" {

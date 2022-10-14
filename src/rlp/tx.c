@@ -2,6 +2,7 @@
 #include "../utils.h"
 #include "../crypto/keccak256.h"
 #include "../crypto/uECC.h"
+#include <stddef.h>
 
 int encode_a(EthereumSignTx* msg, EthereumSig* tx, uint64_t* rawTx) {
 	EncodeEthereumSignTx new_msg;
@@ -81,7 +82,7 @@ char* assemble_transaction(
 
 	uint8_t* hashval[32];
 	keccak_init(&context);
-	keccak_update(&context, (const unsigned char*)(uint8_t*)rawTx, (size_t)strlen(rawTx));
+	keccak_update(&context, (const unsigned char*)(uint8_t*)rawTx, (size_t) strlen(rawTx));
 	keccak_final(&context, (unsigned char*)hashval);
 	memset((char*)&context, 0, sizeof(SHA3_CTX));
 
