@@ -4,7 +4,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "rlp.h"
+#include "RLP.h"
 
 #define SIZE_THRESHOLD 56
 #define OFFSET_SHORT_LIST 0xc0

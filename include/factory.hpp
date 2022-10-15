@@ -1,7 +1,7 @@
 #ifndef FACTORY_DOT_H
 #define FACTORY_DOT_H
 #include "wrapper.hpp"
-#include "json/json.h"
+#include "jsoncpp/json/json.h"
 
 class Wrapper;
 
